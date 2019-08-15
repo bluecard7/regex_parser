@@ -1,3 +1,5 @@
+// Great Explanation of Thompson's algorithm: https://deniskyashif.com/implementing-a-regular-expression-engine/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,30 +45,72 @@ void addExplicitConcatOperator(char * explicitRegex, const char * regex, int reg
 	
 */
 void infixToPostfix(char * postfixRegex, const char * explicitRegex, int explicitRegexLen){
-	int i, index = 0, stack_pos = 0;
+	int i, index = 0, stack_pos = -1;
 	char operatorStack [explicitRegexLen + 1];
 
 	for(i = 0; i < explicitRegexLen; ++i){
 		char token = explicitRegex[i];
-		if(in(token, "|;*", 3) != -1){
+		if(in(token, "|;*(", 4) != -1){
 			while(stack_pos > -1 && operatorStack[stack_pos] != '(' &&
 			      in(token, "|;*", 3) < in(operatorStack[stack_pos], "|;*", 3))
 				postfixRegex[index++] = operatorStack[stack_pos--];
 		
-			operatorStack[stack_pos++] = token;
+			operatorStack[++stack_pos] = token;
 		}
 
+		else if(token == ')'){
+			while(operatorStack[stack_pos] != '(')
+				postfixRegex[index++] = operatorStack[stack_pos--];
+			--stack_pos;
+		}
 		
-
-		// postfixRegex[i] = explicitRegex[i];
-
+		else	// token is a non-special character	
+			postfixRegex[index++] = token;
 	}
-	postfixRegex[i] = '\0';
+
+	while(stack_pos > -1)
+		postfixRegex[index++] = operatorStack[stack_pos--]; 
+
+	postfixRegex[index] = '\0';
 }
 
 
 // ------------------------------------------------ Component 2: NDFA Creation ------------------------------------------------
 
+struct State{
+	char symbol;
+	struct State * symbolicTransition;
+
+	int numEpsilon;
+	struct State * epsilonTransition[2];
+};  	
+
+void initState(struct State * state){
+	state->symbol = '\0';
+	state->symbolicTransition = NULL;
+	
+	state->numEpsilon = 0;
+}
+
+void addSymbolicTransition(struct State * from, char symbol, struct State * to){
+	// check if symbolic transtion already there??
+
+	from->symbol = symbol;
+	from->symbolicTransition = to;
+}
+
+void addEpsilonTranstion(struct State * from, struct State * to){
+	// check if at 2?
+	from->epsilonTransition[from->numEpsilon++] = to;
+}
+
+void fromEpsilon(){
+
+}
+
+
+/*
+*/
 
 
 
@@ -76,6 +120,9 @@ void infixToPostfix(char * postfixRegex, const char * explicitRegex, int explici
 */
 int main(int argc, char ** argv){
 	
+// Component 0: (Later Add-on) Check if regex is valid
+	// validParens();
+
 //Component 1: Infix to Postfix
 	int regexLen = myStrlen(argv[1]);
 
